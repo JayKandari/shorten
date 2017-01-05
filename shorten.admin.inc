@@ -9,8 +9,8 @@
  * Returns HTML representing the shorten admin form.
  */
 function shorten_admin_form() {
-  $form = drupal_get_form('shorten_admin');
-  return drupal_render($form);
+  $form = \Drupal::formBuilder()->getForm('shorten_admin');
+  return \Drupal::service("renderer")->render($form);
 }
 
 /**
@@ -21,7 +21,7 @@ function shorten_admin($form, $form_state) {
     '#type' => 'checkbox',
     '#title' => t('Use "www." instead of "http://"'),
     '#description' => t('"www." is shorter, but "http://" is automatically link-ified by more services.'),
-    '#default_value' => variable_get('shorten_www', FALSE),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_www'),
   );
   $methods = array();
   if (function_exists('file_get_contents')) {
@@ -31,8 +31,12 @@ function shorten_admin($form, $form_state) {
     $methods['curl'] = t('cURL');
   }
   if (empty($methods)) {
-    if (variable_get('shorten_method', _shorten_method_default()) != 'none') {
-      variable_set('shorten_method', 'none');
+    // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
+if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
+      \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', 'none')->save();
     }
     $form['shorten_method'] = array(
       '#type' => 'radios',
@@ -60,14 +64,18 @@ function shorten_admin($form, $form_state) {
     );
   }
   else {
-    $form['shorten_method'] = array(
+    // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
+$form['shorten_method'] = array(
       '#type' => 'radios',
       '#title' => t('Method'),
       '#description' => t('The method to use to retrieve the abbreviated URL. cURL is much faster, if available.'),
-      '#default_value' => variable_get('shorten_method', _shorten_method_default()),
+      '#default_value' => \Drupal::config('shorten.settings')->get('shorten_method'),
       '#options' => $methods,
     );
-    $all_services = module_invoke_all('shorten_service');
+    $all_services = \Drupal::moduleHandler()->invokeAll('shorten_service');
     $services = array();
     foreach ($all_services as $key => $value) {
       $services[$key] = $key;
@@ -78,20 +86,20 @@ function shorten_admin($form, $form_state) {
       '#title' => t('Service'),
       '#description' => t('The default service to use to create the abbreviated URL.') .' '.
         t('If a service is not shown in this list, you probably need to configure it in the Shorten API Keys tab.'),
-      '#default_value' => variable_get('shorten_service', 'is.gd'),
+      '#default_value' => \Drupal::config('shorten.settings')->get('shorten_service'),
       '#options' => $services,
     );
     $form['shorten_service_backup'] = array(
       '#type' => 'select',
       '#title' => t('Backup Service'),
       '#description' => t('The service to use to create the abbreviated URL if the primary or requested service is down.'),
-      '#default_value' => variable_get('shorten_service_backup', 'TinyURL'),
+      '#default_value' => \Drupal::config('shorten.settings')->get('shorten_service_backup'),
       '#options' => $services,
     );
     $form['shorten_show_service'] = array(
       '#type' => 'checkbox',
       '#title' => t('Show the list of URL shortening services in the user interface'),
-      '#default_value' => variable_get('shorten_show_service', FALSE),
+      '#default_value' => \Drupal::config('shorten.settings')->get('shorten_show_service'),
       '#description' => t('Allow users to choose which service to use in the Shorten URLs block and page.'),
     );
   }
@@ -100,7 +108,7 @@ function shorten_admin($form, $form_state) {
     '#title' => t('Shorten aliased URLs where possible'),
     '#description' => t('Where possible, generate shortened URLs based on the aliased version of a URL.')
       . ' <strong>' . t('Some integrated modules ignore this.') . '</strong>',
-    '#default_value' => variable_get('shorten_use_alias', 1),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_use_alias'),
   );
   $form['shorten_timeout'] = array(
     '#type' => 'textfield',
@@ -113,7 +121,7 @@ function shorten_admin($form, $form_state) {
       t('You must enter a nonnegative integer. Enter 0 (zero) to wait for a response indefinitely.'),
     '#size' => 3,
     '#required' => TRUE,
-    '#default_value' => variable_get('shorten_timeout', 3),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_timeout'),
   );
   $form['shorten_cache_duration'] = array(
     '#type' => 'textfield',
@@ -124,7 +132,7 @@ function shorten_admin($form, $form_state) {
       t('Leave this field blank to store shortened URLs indefinitely (although this is not recommended).') . ' ' .
       t('The default value is 1814400 (3 weeks).'),
     '#size' => 11,
-    '#default_value' => variable_get('shorten_cache_duration', 1814400),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_cache_duration'),
   );
   $form['shorten_cache_fail_duration'] = array(
     '#type' => 'textfield',
@@ -135,7 +143,7 @@ function shorten_admin($form, $form_state) {
       t('The default value is 1800 (30 minutes).'),
     '#size' => 11,
     '#required' => TRUE,
-    '#default_value' => variable_get('shorten_cache_fail_duration', 1800),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_cache_fail_duration'),
   );
   $form['shorten_cache_clear_all'] = array(
     '#type' => 'checkbox',
@@ -144,15 +152,19 @@ function shorten_admin($form, $form_state) {
       t('However, regenerating the cache of shortened URLs can be performance-intensive, and the cache does not affect Drupal behaviors.') . ' ' .
       t('To avoid regenerating this cache after clearing all Drupal caches, un-check this option.') . ' ' .
       t('Note that if you need to completely clear this cache, un-checking this option will require that you do it manually.'),
-    '#default_value' => variable_get('shorten_cache_clear_all', TRUE),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_cache_clear_all'),
   );
   unset($services['none']);
-  $form['shorten_invisible_services'] = array(
+  // @FIXME
+// Could not extract the default value because it is either indeterminate, or
+// not scalar. You'll need to provide a default value in
+// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
+$form['shorten_invisible_services'] = array(
     '#type' => 'checkboxes',
     '#title' => t('Disallowed services'),
     '#description' => t('Checking the box next to a service will make it <strong>unavailable</strong> for use in the Shorten URLs block and page.') . ' ' .
       t('If you disallow all services, the primary service will be used.'),
-    '#default_value' => variable_get('shorten_invisible_services', array()),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_invisible_services'),
     '#options' => array_map('check_plain', $services),
   );
   return system_settings_form($form);
@@ -206,8 +218,8 @@ function shorten_admin_submit($form, &$form_state) {
  * Returns HTML representing the shorten keys admin form.
  */
 function shorten_keys_form() {
-  $form = drupal_get_form('shorten_keys');
-  return drupal_render($form);
+  $form = \Drupal::formBuilder()->getForm('shorten_keys');
+  return \Drupal::service("renderer")->render($form);
 }
 
 /**
@@ -223,42 +235,42 @@ function shorten_keys($form, $form_state) {
   $form['shorten_bitly']['shorten_bitly_login'] = array(
     '#type' => 'textfield',
     '#title' => t('Bit.ly Login'),
-    '#default_value' => variable_get('shorten_bitly_login', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_bitly_login'),
   );
   $form['shorten_bitly']['shorten_bitly_key'] = array(
     '#type' => 'textfield',
     '#title' => t('Bit.ly API Key'),
-    '#default_value' => variable_get('shorten_bitly_key', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_bitly_key'),
   );
   $form['shorten_budurl'] = array(
     '#type' => 'textfield',
     '#title' => t('BudURL API Key'),
-    '#default_value' => variable_get('shorten_budurl', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_budurl'),
   );
   $form['shorten_cligs'] = array(
     '#type' => 'textfield',
     '#title' => t('Cligs API Key'),
-    '#default_value' => variable_get('shorten_cligs', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_cligs'),
   );
   $form['shorten_ez'] = array(
     '#type' => 'textfield',
     '#title' => t('Ez API Key'),
-    '#default_value' => variable_get('shorten_ez', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_ez'),
   );
   $form['shorten_fwd4me'] = array(
     '#type' => 'textfield',
     '#title' => t('Fwd4.me API Key'),
-    '#default_value' => variable_get('shorten_fwd4me', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_fwd4me'),
   );
   $form['shorten_googl'] = array(
     '#type' => 'textfield',
     '#title' => t('Goo.gl API Key'),
-    '#default_value' => variable_get('shorten_googl', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_googl'),
   );
   $form['shorten_redirec'] = array(
     '#type' => 'textfield',
     '#title' => t('Redir.ec API Key'),
-    '#default_value' => variable_get('shorten_redirec', ''),
+    '#default_value' => \Drupal::config('shorten.settings')->get('shorten_redirec'),
   );
   return system_settings_form($form);
 }

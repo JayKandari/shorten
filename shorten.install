@@ -20,7 +20,7 @@ function shorten_schema() {
  * tokens only when needed.
  */
 function shorten_update_7001() {
-  variable_del('shorten_generate_token');
+  \Drupal::config('shorten.settings')->clear('shorten_generate_token')->save();
 }
 
 /**
@@ -28,8 +28,8 @@ function shorten_update_7001() {
  * Removes variables for deprecated services.
  */
 function shorten_update_7002() {
-  variable_del('shorten_cligs');
-  variable_del('shorten_redirec');
+  \Drupal::config('shorten.settings')->clear('shorten_cligs')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_redirec')->save();
 }
 
 /**
@@ -38,23 +38,23 @@ function shorten_update_7002() {
 function shorten_uninstall() {
   // The adjix and adjix_custom variables aren't used any more but they should
   // still be deleted from installations that previously used them.
-  variable_del('shorten_ez');
-  variable_del('shorten_www');
-  variable_del('shorten_adjix');
-  variable_del('shorten_googl');
-  variable_del('shorten_budurl');
-  variable_del('shorten_fwd4me');
-  variable_del('shorten_method');
-  variable_del('shorten_service');
-  variable_del('shorten_timeout');
-  variable_del('shorten_bitly_key');
-  variable_del('shorten_use_alias');
-  variable_del('shorten_bitly_login');
-  variable_del('shorten_adjix_custom');
-  variable_del('shorten_show_service');
-  variable_del('shorten_cache_duration');
-  variable_del('shorten_service_backup');
-  variable_del('shorten_cache_clear_all');
-  variable_del('shorten_invisible_services');
-  variable_del('shorten_cache_fail_duration');
+  \Drupal::config('shorten.settings')->clear('shorten_ez')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_www')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_adjix')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_googl')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_budurl')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_fwd4me')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_method')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_service')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_timeout')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_bitly_key')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_use_alias')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_bitly_login')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_adjix_custom')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_show_service')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_cache_duration')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_service_backup')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_cache_clear_all')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_invisible_services')->save();
+  \Drupal::config('shorten.settings')->clear('shorten_cache_fail_duration')->save();
 }
