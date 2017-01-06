@@ -64,7 +64,7 @@ class ShortenShortenForm extends FormBase {
       $last_service = $storage['service'];
     }
     $service = _shorten_service_form($last_service);
-    // kint($service);
+
     if (is_array($service)) {
       $form['service'] = $service;
     }
@@ -111,7 +111,7 @@ class ShortenShortenForm extends FormBase {
       $service = $values['service'];
     }
     $shortened = shorten_url($values['url_' . $storage['step']], $service);
-    if ($values['service']) {
+    if (isset($values['service'])) {
       $_SESSION['shorten_service'] = $values['service'];
     }
     drupal_set_message($this->t('%original was shortened to %shortened', array('%original' => $values['url_' . $storage['step']], '%shortened' => $shortened)));
@@ -122,7 +122,7 @@ class ShortenShortenForm extends FormBase {
       $storage = array();
     }
     $storage['short_url'] = $shortened;
-    $storage['service']   = $values['service'];
+    $storage['service']   = empty($values['service'])? '' : $values['service'];
     if (isset($storage['step'])) {
       $storage['step']++;
     }

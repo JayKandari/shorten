@@ -245,7 +245,7 @@ function _shorten_get_url($original, $api, $service) {
     }
   }
 
-  if ($url) {
+  if (isset($url)) {
     if (\Drupal\Component\Utility\Unicode::substr($url, 0, 7) == 'http://' || \Drupal\Component\Utility\Unicode::substr($url, 0, 8) == 'https://') {
       return $url;
     }
@@ -363,37 +363,18 @@ function shorten_fetch($url, $tag = '', $special = '', $options = array()) {
     'timeout' => \Drupal::config('shorten.settings')->get('shorten_timeout'),
     'context' => NULL, // only used with the PHP method
   );
-  // @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-// @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-if (\Drupal::config('shorten.settings')->get('shorten_method') == 'php') {
-    // @FIXME
-// drupal_http_request() has been replaced by the Guzzle HTTP client, which is bundled
-// with Drupal core.
-//
-//
-// @see https://www.drupal.org/node/1862446
-// @see http://docs.guzzlephp.org/en/latest
-// $result = drupal_http_request($url, $options);
-    $client = \Drupal::httpClient();
-    $request = $client->createRequest('GET', $url);
+
+  if (\Drupal::config('shorten.settings')->get('shorten_method') == 'php') {
     try {
-      $response = $client->get($url, $options);
-      $result = $response->getBody();
+      $response = \Drupal::httpClient()->get($url, $options);
+      $result = stripslashes( (string) $response->getBody());
     }
     catch (RequestException $e) {
-      watchdog_exception('shorten', $e);
+      \Drupal::logger('shorten')->error('@code error shortening the URL @url using the PHP request method. Error message: %error', array('@code' => $result->code, '@url' => $url, '%error' => $e));
     }
 
-    $contents = (isset($result->data) && !isset($result->error)) ? $result->data : NULL;
-    if (!empty($result->error)) {
-      \Drupal::logger('shorten')->error('@code error shortening the URL @url using the PHP request method. Error message: %error', array('@code' => $result->code, '@url' => $url, '%error' => $result->error));
-    }
+    $contents = empty($result)? NULL : $result;
+
   }
   elseif (\Drupal::config('shorten.settings')->get('shorten_method') == 'curl') {
     $c = curl_init();
@@ -534,8 +515,9 @@ function _shorten_service_form($last_service = NULL) {
     }
     $count = count($services);
     if ($count > 1) {
-      if (!$services[$default]) {
+      if (isset($services[$default])) {
         unset($default);
+        $default = NULL;
       }
       return array(
         '#type' => 'select',
