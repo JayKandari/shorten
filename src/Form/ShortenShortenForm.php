@@ -25,8 +25,6 @@ class ShortenShortenForm extends FormBase {
     $form_state_values = $form_state->getValues();
     $storage = &$form_state->getStorage();
 
-    // kint($storage);
-
     $form['#attached']['library'][] = 'shorten/shorten';
 
     //Form elements between ['opendiv'] and ['closediv'] will be refreshed via AHAH on form submission.

@@ -21,80 +21,6 @@ function shorten_help($path, $arg) {
 }
 
 /**
- * Implements hook_menu().
- */
-function shorten_menu() {
-  $items = array();
-  $items['admin/config/services/shorten'] = array(
-    'title' => 'Shorten',
-    'description' => 'Adjust certain display settings for Shorten.',
-    'page callback' => 'shorten_admin_form',
-    'access arguments' => array('administer site configuration'),
-    'file' => 'shorten.admin.inc',
-  );
-  $items['admin/config/services/shorten/general'] = array(
-    'title' => 'General',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'access arguments' => array('administer site configuration'),
-    'weight' => -1,
-  );
-  $items['admin/config/services/shorten/keys'] = array(
-    'title' => 'Shorten API Keys',
-    'description' => 'Fill in API keys to use certain services.',
-    'page callback' => 'shorten_keys_form',
-    'access arguments' => array('manage Shorten URLs API keys'),
-    'type' => MENU_LOCAL_TASK,
-    'file' => 'shorten.admin.inc',
-  );
-  $items['shorten'] = array(
-    'title' => 'Shorten URLs',
-    'page callback' => 'shorten_form_shorten_form',
-    'page arguments' => array('shorten_form_shorten'),
-    'access arguments' => array('use Shorten URLs page'),
-  );
-  return $items;
-}
-
-/**
- * Implements hook_block_info().
- */
-function shorten_block_info() {
-  $blocks = array();
-  $blocks['shorten']['info'] = t('Shorten URLs');
-  $blocks['shorten']['visibility'] = 0;
-  $blocks['shorten']['pages'] = 'shorten';
-  $blocks['shorten_short']['info'] = t('Short URL');
-  $blocks['shorten_short']['cache'] = DRUPAL_CACHE_PER_PAGE;
-  return $blocks;
-}
-
-/**
- * Implements hook_block_view().
- */
-function shorten_block_view($delta = '') {
-  $block = array();
-  if ($delta == 'shorten') {
-    $block['subject'] = t('Shorten URLs');
-    $block['content'] = shorten_form_shorten_form();
-    return $block;
-  }
-  elseif ($delta == 'shorten_short') {
-    $block['subject'] = t('Short URL');
-    $block['content'] = shorten_current_form();
-    return $block;
-  }
-}
-
-/**
- * Implements hook_block_configure().
- */
-function shorten_block_configure($delta = '') {
-  if ($delta == 'shorten_short') {
-    drupal_set_message(t('This block displays the short URL for the page on which it is shown, which can slow down uncached pages in some instances.'), 'warning');
-  }
-}
-
-/**
  * Implements hook_perm().
  */
 function shorten_permission() {
@@ -134,7 +60,8 @@ function shorten_flush_caches() {
  */
 function shorten_url($original = '', $service = '') {
   if (!$original) {
-    $original = Url::fromUserInput('/' . $_GET['q']);
+    $original = Url::fromRoute('<current>',array(),array('absolute'=>'true'))->toString();
+    // print $original; die();
   }
   $original_for_caching = urlencode($original); // https://www.drupal.org/node/2324925
   if (!$service) {
@@ -209,7 +136,7 @@ function _shorten_get_url($original, $api, $service) {
   $method = \Drupal\Component\Utility\Unicode::strtoupper(\Drupal::config('shorten.settings')->get('shorten_method'));
   $service = t('an unknown service');
   if (is_string($api)) {
-    $url = shorten_fetch($api . urlencode($original));
+    $url = shorten_fetch($api . $original);
     $service = $api;
   }
   elseif (is_array($api)) {
@@ -464,14 +391,6 @@ function _shorten_xml($xml, $tag) {
 }
 
 /**
- * Returns HTML representing the shorten form.
- */
-function shorten_form_shorten_form() {
-  $form = \Drupal::formBuilder()->getForm('shorten_form_shorten');
-  return \Drupal::service("renderer")->render($form);
-}
-
-/**
  * JS callback for submitting the Shorten form.
  */
 function shorten_save_js(array &$form, $form_state) {
@@ -539,35 +458,6 @@ function _shorten_service_form($last_service = NULL) {
       '#value' => $default,
     );
   }
-}
-
-/**
- * Returns HTML representing the short URL form.
- */
-function shorten_current_form() {
-  $form = \Drupal::formBuilder()->getForm('shorten_current');
-  return \Drupal::service("renderer")->render($form);
-}
-
-/**
- * Builds a textfield to show the short URL for the current page.
- */
-function shorten_current($form, $form_state) {
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-//
-//
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js(drupal_get_path('module', 'shorten') . '/shorten.js');
-
-  $form['this_shortened'] = array(
-    '#type' => 'textfield',
-    '#size' => 25,
-    '#default_value' => shorten_url(),
-  );
-  return $form;
 }
 
 /**
