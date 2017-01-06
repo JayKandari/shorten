@@ -503,11 +503,13 @@ function shorten_tokens($type, $tokens, array $data = array(), array $options = 
       && isset($tokens['short-url'])) {
     $node = (object) $data['node'];
     // @FIXME
-// url() expects a route name or an external URI.
-// $replacements[$tokens['short-url']] = shorten_url(url('node/' . $node->nid, array(
-//       'absolute' => TRUE,
-//       'alias' => variable_get('shorten_use_alias', 1),
-//     )));
+    // url() expects a route name or an external URI.
+    $url = Url::fromUri('internal:/node' . $node->nid, array(
+      'absolute' => TRUE,
+      'alias' => \Drupal::config('shorten.settings')->get('shorten_use_alias'),
+    ))->toString();
+
+    $replacements[$tokens['short-url']] = shorten_url($url);
 
   }
 
@@ -536,8 +538,8 @@ function shorten_tokens($type, $tokens, array $data = array(), array $options = 
       switch ($name) {
         case 'shorten':
           // @FIXME
-// url() expects a route name or an external URI.
-// $value = url($path, $url_options);
+          // url() expects a route name or an external URI.
+          $value = Url::fromUri('internal:/' . $path, $url_options)->toString();
 
           $replacements[$original] = shorten_url($value);
           break;
