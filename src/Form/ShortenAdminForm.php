@@ -194,5 +194,44 @@ class ShortenAdminForm extends ConfigFormBase {
       ->set('shorten_cache_clear_all', $values['shorten_cache_clear_all'])
       ->set('shorten_invisible_services', serialize($values['shorten_invisible_services']))
       ->save();
+
+      // Changed settings usually mean that different URLs should be used.
+      // cache_clear_all('*', 'cache_shorten', TRUE);
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    $v = $form_state->getValues();;
+    if ($v['shorten_service'] == $v['shorten_service_backup'] && $v['shorten_service_backup'] != 'none') {
+      $form_state->setErrorByName('shorten_service_backup', $this->t('You must select a backup abbreviation service that is different than your primary service.'));
+    }
+    elseif (($v['shorten_service'] == 'bit.ly' && $v['shorten_service_backup'] == 'j.mp') ||
+      ($v['shorten_service'] == 'j.mp' && $v['shorten_service_backup'] == 'bit.ly')) {
+      $form_state->setErrorByName('shorten_service_backup', $this->t('j.mp and bit.ly are the same service.') . ' ' .
+        $this->t('You must select a backup abbreviation service that is different than your primary service.'));
+    }
+    if ($v['shorten_service'] == 'none' && $v['shorten_service_backup'] != 'none') {
+      $form_state->setErrorByName($this->t('You have selected a backup URL abbreviation service, but no primary service.') . ' ' .
+        $this->t('Your URLs will not be abbreviated with these settings.'));
+    }
+    if ($v['shorten_cache_duration'] !== '' && (
+      !is_numeric($v['shorten_cache_duration']) ||
+      round($v['shorten_cache_duration']) != $v['shorten_cache_duration'] ||
+      $v['shorten_cache_duration'] < 0
+    )) {
+      $form_state->setErrorByName('shorten_cache_duration', $this->t('The cache duration must be a positive integer or left blank.'));
+    }
+    if (
+      !is_numeric($v['shorten_cache_fail_duration']) ||
+      round($v['shorten_cache_fail_duration']) != $v['shorten_cache_fail_duration'] ||
+      $v['shorten_cache_fail_duration'] < 0
+    ) {
+      $form_state->setErrorByName('shorten_cache_fail_duration', $this->t('The cache fail duration must be a positive integer.'));
+    }
+    if (!is_numeric($v['shorten_timeout']) || round($v['shorten_timeout']) != $v['shorten_timeout'] || $v['shorten_timeout'] < 0) {
+      $form_state->setErrorByName('shorten_timeout', $this->t('The timeout duration must be a nonnegative integer.'));
+    }
   }
 }
