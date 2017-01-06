@@ -32,6 +32,8 @@ class ShortenAdminForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
     $config = $this->config('shorten.settings');
+    // kint($config);
+    // kint(\Drupal::config('shorten.settings'));
     $form['shorten_www'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use "www." instead of "http://"'),
@@ -46,11 +48,7 @@ class ShortenAdminForm extends ConfigFormBase {
       $methods['curl'] = t('cURL');
     }
     if (empty($methods)) {
-      // @FIXME
-  // Could not extract the default value because it is either indeterminate, or
-  // not scalar. You'll need to provide a default value in
-  // config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-  if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
+      if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
         \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', 'none')->save();
       }
       $form['shorten_method'] = array(
@@ -79,11 +77,10 @@ class ShortenAdminForm extends ConfigFormBase {
       );
     }
     else {
-      // @FIXME
-  // Could not extract the default value because it is either indeterminate, or
-  // not scalar. You'll need to provide a default value in
-  // config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-  $form['shorten_method'] = array(
+      if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
+        \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', _shorten_method_default())->save();
+      }
+      $form['shorten_method'] = array(
         '#type' => 'radios',
         '#title' => t('Method'),
         '#description' => t('The method to use to retrieve the abbreviated URL. cURL is much faster, if available.'),
@@ -170,16 +167,15 @@ class ShortenAdminForm extends ConfigFormBase {
       '#default_value' => \Drupal::config('shorten.settings')->get('shorten_cache_clear_all'),
     );
     unset($services['none']);
-    // @FIXME
-  // Could not extract the default value because it is either indeterminate, or
-  // not scalar. You'll need to provide a default value in
-  // config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-  $form['shorten_invisible_services'] = array(
+    if (empty(unserialize(\Drupal::config('shorten.settings')->get('shorten_invisible_services')))) {
+      \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_invisible_services', serialize(array()))->save();
+    }
+    $form['shorten_invisible_services'] = array(
       '#type' => 'checkboxes',
       '#title' => t('Disallowed services'),
       '#description' => t('Checking the box next to a service will make it <strong>unavailable</strong> for use in the Shorten URLs block and page.') . ' ' .
         t('If you disallow all services, the primary service will be used.'),
-      '#default_value' => \Drupal::config('shorten.settings')->get('shorten_invisible_services'),
+      '#default_value' => unserialize(\Drupal::config('shorten.settings')->get('shorten_invisible_services')),
       '#options' => $services, //array_map('check_plain', $services),
     );
     return parent::buildForm($form, $form_state);
@@ -190,8 +186,18 @@ class ShortenAdminForm extends ConfigFormBase {
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     $values = $form_state->getValues();
-    $this->config('your_module.settings')
-      ->set('your_message', $values['your_message'])
+    $this->config('shorten.settings')
+      ->set('shorten_www', $values['shorten_www'])
+      ->set('shorten_method', $values['shorten_method'])
+      ->set('shorten_service', $values['shorten_service'])
+      ->set('shorten_service_backup', $values['shorten_service_backup'])
+      ->set('shorten_show_service', $values['shorten_show_service'])
+      ->set('shorten_use_alias', $values['shorten_use_alias'])
+      ->set('shorten_timeout', $values['shorten_timeout'])
+      ->set('shorten_cache_duration', $values['shorten_cache_duration'])
+      ->set('shorten_cache_fail_duration', $values['shorten_cache_fail_duration'])
+      ->set('shorten_cache_clear_all', $values['shorten_cache_clear_all'])
+      ->set('shorten_invisible_services', serialize($values['shorten_invisible_services']))
       ->save();
   }
 }

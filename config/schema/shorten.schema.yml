@@ -4,12 +4,16 @@ shorten.settings:
   mapping:
     shorten_cache_clear_all:
       type: boolean
+    shorten_invisible_services:
+      type: string
     shorten_service:
       type: string
     shorten_service_backup:
       type: string
     shorten_www:
       type: boolean
+    shorten_method:
+      type: string
     shorten_cache_duration:
       type: integer
     shorten_cache_fail_duration:

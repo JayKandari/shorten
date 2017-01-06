@@ -1,7 +1,9 @@
 shorten_cache_clear_all: true
-shorten_service: is.gd
-shorten_service_backup: TinyURL
+shorten_invisible_services: ''
+shorten_service: 'is.gd'
+shorten_service_backup: 'TinyURL'
 shorten_www: false
+shorten_method: 'php'
 shorten_cache_duration: 1814400
 shorten_cache_fail_duration: 1800
 shorten_budurl: ''
