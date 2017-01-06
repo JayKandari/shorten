@@ -1,3 +1,23 @@
+```
+This Module is currently undergoing Porting from D7 => D8
+
+# URL:
+* https://www.drupal.org/project/shorten
+
+# Completed Tasks:
+* shorten
+
+# Pending Tasks:
+* record_shorten
+* shorten_cs
+* shortener
+
+# Usage:
+* "git clone https://github.com/JayKandari/shorten.git"
+
+# Author:
+* @JayKandari
+```
 
 =======
 SUMMARY
