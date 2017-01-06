@@ -5,6 +5,8 @@
  *   Shortens URLs via external services.
  */
 
+use Drupal\Core\Url;
+
 /**
  * Implements hook_help().
  */
@@ -111,9 +113,9 @@ function shorten_permission() {
  * Implements hook_flush_caches().
  */
 function shorten_flush_caches() {
-  if (\Drupal::config('shorten.settings')->get('shorten_cache_clear_all')) {
-    return array('cache_shorten');
-  }
+  // if (\Drupal::config('shorten.settings')->get('shorten_cache_clear_all')) {
+  //   return array('cache_shorten');
+  // }
   return array();
 }
 
@@ -132,19 +134,16 @@ function shorten_flush_caches() {
  */
 function shorten_url($original = '', $service = '') {
   if (!$original) {
-    // @FIXME
-// url() expects a route name or an external URI.
-// $original = url($_GET['q'], array('absolute' => TRUE, 'alias' => !variable_get('shorten_use_alias', 1)));
-
+    $original = Url::fromUserInput('/' . $_GET['q']);
   }
   $original_for_caching = urlencode($original); // https://www.drupal.org/node/2324925
   if (!$service) {
     $service = \Drupal::config('shorten.settings')->get('shorten_service');
   }
-  $cached = \Drupal::cache('cache_shorten')->get($original_for_caching);
-  if (!empty($cached->data) && REQUEST_TIME < $cached->expire) {
-    return $cached->data;
-  }
+  // $cached = \Drupal::cache('cache_shorten')->get($original_for_caching);
+  // if (!empty($cached->data) && REQUEST_TIME < $cached->expire) {
+  //   return $cached->data;
+  // }
   $services = \Drupal::moduleHandler()->invokeAll('shorten_service');
   if (isset($services[$service])) {
     $url = _shorten_get_url($original, $services[$service], $service);
@@ -187,7 +186,7 @@ function shorten_url($original = '', $service = '') {
   else {
     $expire = \Drupal\Core\Cache\Cache::PERMANENT;
   }
-  \Drupal::cache('cache_shorten')->set($original_for_caching, $url, $expire);
+  // \Drupal::cache('cache_shorten')->set($original_for_caching, $url, $expire);
   \Drupal::moduleHandler()->invokeAll('shorten_create', [$original, $url, $service]);
   return $url;
 }
@@ -207,11 +206,7 @@ function shorten_url($original = '', $service = '') {
  *   An abbreviated URL.
  */
 function _shorten_get_url($original, $api, $service) {
-  // @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-$method = \Drupal\Component\Utility\Unicode::strtoupper(\Drupal::config('shorten.settings')->get('shorten_method'));
+  $method = \Drupal\Component\Utility\Unicode::strtoupper(\Drupal::config('shorten.settings')->get('shorten_method'));
   $service = t('an unknown service');
   if (is_string($api)) {
     $url = shorten_fetch($api . urlencode($original));
@@ -385,6 +380,15 @@ if (\Drupal::config('shorten.settings')->get('shorten_method') == 'php') {
 // @see https://www.drupal.org/node/1862446
 // @see http://docs.guzzlephp.org/en/latest
 // $result = drupal_http_request($url, $options);
+    $client = \Drupal::httpClient();
+    $request = $client->createRequest('GET', $url);
+    try {
+      $response = $client->get($url, $options);
+      $result = $response->getBody();
+    }
+    catch (RequestException $e) {
+      watchdog_exception('shorten', $e);
+    }
 
     $contents = (isset($result->data) && !isset($result->error)) ? $result->data : NULL;
     if (!empty($result->error)) {
@@ -487,121 +491,11 @@ function shorten_form_shorten_form() {
 }
 
 /**
- * Builds a form which allows shortening of a URL via the UI.
- */
-function shorten_form_shorten($form, &$form_state) {
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-//
-//
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js(drupal_get_path('module', 'shorten') . '/shorten.js');
-
-  //Form elements between ['opendiv'] and ['closediv'] will be refreshed via AHAH on form submission.
-  $form['opendiv'] = array(
-    '#markup' => '<div id="shorten_replace">',
-  );
-  if (!isset($form_state['storage'])) {
-    $form_state['storage'] = array('step' => 0);
-  }
-  if (isset($form_state['storage']['short_url'])) {
-    // This whole "step" business keeps the form element from being cached.
-    $form['shortened_url_' . $form_state['storage']['step']] = array(
-      '#type' => 'textfield',
-      '#title' => t('Shortened URL'),
-      '#default_value' => $form_state['storage']['short_url'],
-      '#size' => 25,
-      '#attributes' => array('class' => array('shorten-shortened-url')),
-    );
-  }
-  $form['url_' . $form_state['storage']['step']] = array(
-    '#type' => 'textfield',
-    '#title' => t('URL'),
-    '#default_value' => '',
-    '#required' => TRUE,
-    '#size' => 25,
-    '#maxlength' => 2048,
-    '#attributes' => array('class' => array('shorten-long-url')),
-  );
-  //Form elements between ['opendiv'] and ['closediv'] will be refreshed via AHAH on form submission.
-  $form['closediv'] = array(
-    '#markup' => '</div>',
-  );
-  $last_service = NULL;
-  if (isset($form_state['storage']['service'])) {
-    $last_service = $form_state['storage']['service'];
-  }
-  $service = _shorten_service_form($last_service);
-  if (is_array($service)) {
-    $form['service'] = $service;
-  }
-  $form['shorten'] = array(
-    '#type' => 'submit',
-    '#value' => t('Shorten'),
-    '#ajax' => array(
-      'callback' => 'shorten_save_js',
-      'wrapper' => 'shorten_replace',
-      'effect' => 'fade',
-      'method' => 'replace',
-    ),
-  );
-  return $form;
-}
-
-/**
- * Validate function for the Shorten form.
- * It's hard to really figure out what a valid URL is. We might reasonably
- * expect http://example.com, https://example.com, www.example.com, or even
- * just example.com to be correctly shortened by respective services. So instead
- * of dealing with this logic ourselves, we just check that there is at least a
- * period in the string, because there must be a TLD, and we check length.
- */
-function shorten_form_shorten_validate($form, &$form_state) {
-  $url = $form_state['values']['url_' . $form_state['storage']['step']];
-  if (\Drupal\Component\Utility\Unicode::strlen($url) > 4) {
-    if (!strpos($url, '.', 1)) {
-      form_set_error('url', t('Please enter a valid URL.'));
-    }
-  }
-  else {
-    form_set_error('url', t('Please enter a valid URL.'));
-  }
-}
-
-/**
- * Submit function for the Shorten form.
- */
-function shorten_form_shorten_submit($form, &$form_state) {
-  $service = '';
-  if ($form_state['values']['service']) {
-    $service = $form_state['values']['service'];
-  }
-  $shortened = shorten_url($form_state['values']['url_' . $form_state['storage']['step']], $service);
-  if ($form_state['values']['service']) {
-    $_SESSION['shorten_service'] = $form_state['values']['service'];
-  }
-  drupal_set_message(t('%original was shortened to %shortened', array('%original' => $form_state['values']['url_' . $form_state['storage']['step']], '%shortened' => $shortened)));
-  $form_state['rebuild'] = TRUE;
-  if (empty($form_state['storage'])) {
-    $form_state['storage'] = array();
-  }
-  $form_state['storage']['short_url'] = $shortened;
-  $form_state['storage']['service']   = $form_state['values']['service'];
-  if (isset($form_state['storage']['step'])) {
-    $form_state['storage']['step']++;
-  }
-  else {
-    $form_state['storage']['step'] = 0;
-  }
-}
-
-/**
  * JS callback for submitting the Shorten form.
  */
-function shorten_save_js($form, $form_state) {
-  $step = $form_state['storage']['step'];
+function shorten_save_js(array &$form, $form_state) {
+  $storage = &$form_state->getStorage();
+  $step = $storage['step'];
   $new_form = array();
   $new_form['opendiv'] = $form['opendiv'];
   $new_form['shortened_url_' . $step] = $form['shortened_url_' . $step];
@@ -620,11 +514,7 @@ function _shorten_service_form($last_service = NULL) {
   if (\Drupal::config('shorten.settings')->get('shorten_show_service') && _shorten_method_default() != 'none') {
     $all_services = \Drupal::moduleHandler()->invokeAll('shorten_service');
     $services = array();
-    // @FIXME
-// Could not extract the default value because it is either indeterminate, or
-// not scalar. You'll need to provide a default value in
-// config/install/shorten.settings.yml and config/schema/shorten.schema.yml.
-$disallowed = \Drupal::config('shorten.settings')->get('shorten_invisible_services');
+    $disallowed = unserialize(\Drupal::config('shorten.settings')->get('shorten_invisible_services'));
     foreach ($all_services as $key => $value) {
       if (!$disallowed[$key]) {
         $services[$key] = $key;

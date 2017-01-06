@@ -32,8 +32,6 @@ class ShortenAdminForm extends ConfigFormBase {
    */
   public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
     $config = $this->config('shorten.settings');
-    // kint($config);
-    // kint(\Drupal::config('shorten.settings'));
     $form['shorten_www'] = array(
       '#type' => 'checkbox',
       '#title' => t('Use "www." instead of "http://"'),
@@ -47,10 +45,10 @@ class ShortenAdminForm extends ConfigFormBase {
     if (function_exists('curl_exec')) {
       $methods['curl'] = t('cURL');
     }
+    if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
+      \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', _shorten_method_default())->save();
+    }
     if (empty($methods)) {
-      if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
-        \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', 'none')->save();
-      }
       $form['shorten_method'] = array(
         '#type' => 'radios',
         '#title' => t('Method'),
@@ -77,9 +75,6 @@ class ShortenAdminForm extends ConfigFormBase {
       );
     }
     else {
-      if (\Drupal::config('shorten.settings')->get('shorten_method') != 'none') {
-        \Drupal::configFactory()->getEditable('shorten.settings')->set('shorten_method', _shorten_method_default())->save();
-      }
       $form['shorten_method'] = array(
         '#type' => 'radios',
         '#title' => t('Method'),
