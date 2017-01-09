@@ -21,7 +21,7 @@ function shorten_cs_schema() {
       ),
       'name' => array(
         'type' => 'varchar',
-        'length' => 255,
+        'length' => 190,
         'not null' => TRUE,
         'default' => '',
         'description' => 'The name of the URL shortening service.',

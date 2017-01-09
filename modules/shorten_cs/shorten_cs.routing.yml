@@ -2,19 +2,20 @@ shorten_cs.theme_shorten_cs_admin:
   path: /admin/config/services/shorten/custom
   defaults:
     _title: 'Custom services'
+    _form: '\Drupal\shorten_cs\Form\CustomServicesAddForm'
   requirements:
     _permission: 'administer Shorten URLs custom services'
 shorten_cs.edit_form:
   path: '/admin/config/services/shorten/custom/edit/{service}'
   defaults:
     _title: 'Edit custom service'
-    _controller: '\Drupal\shorten_cs\Controller\DefaultController::shorten_cs_edit_form'
+    _form: '\Drupal\shorten_cs\Form\CustomServicesEditForm'
   requirements:
     _permission: 'administer Shorten URLs custom services'
 shorten_cs.delete_form:
   path: '/admin/config/services/shorten/custom/delete/{service}'
   defaults:
     _title: 'Custom services'
-    _controller: '\Drupal\shorten_cs\Controller\DefaultController::shorten_cs_delete_form'
+    _form: '\Drupal\shorten_cs\Form\CustomServicesDeleteForm'
   requirements:
     _permission: 'administer Shorten URLs custom services'
