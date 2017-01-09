@@ -6,11 +6,13 @@ This Module is currently undergoing Porting from D7 => D8
 
 # Completed Tasks:
 * shorten
-
-# Pending Tasks:
-* record_shorten
 * shorten_cs
+
+# In progress:
 * shortener
+
+# Pending:
+* record_shorten
 
 # Usage:
 * "git clone https://github.com/JayKandari/shorten.git"
