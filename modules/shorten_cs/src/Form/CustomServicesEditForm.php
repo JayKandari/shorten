@@ -30,22 +30,27 @@ class CustomServicesEditForm extends ConfigFormBase {
   /**
    * {@inheritdoc}
    */
-  public function buildForm(array $form, FormStateInterface $form_state, Request $request = NULL) {
-    $config = $this->config('shorten.settings');
-    // $form = shorten_cs_add_form($form, $form_state);
-    $form = \Drupal::formBuilder()->getForm('shorten_cs_edit');
-    // return \Drupal::service("renderer")->render($form);
+  public function buildForm(array $form, FormStateInterface $form_state, $service = NULL) {
+    $form = \Drupal::formBuilder()->getForm('Drupal\shorten_cs\Form\CustomServicesAddForm');
+    $sid = $service;
+    $service = db_select('shorten_cs', 's')
+      ->fields('s')
+      ->condition('sid', intval($sid))
+      ->execute()
+      ->fetchAssoc();
 
     foreach (array('name', 'url', 'type', 'tag') as $key) {
-      $form[$key]['#default_value'] = $service->{$key};
+      $form[$key]['#default_value'] = $service[$key];
+      unset($form[$key]['#value']);
     }
+
     $form['sid'] = array(
       '#type' => 'value',
-      '#value' => $service->sid,
+      '#value' => $service['sid'],
     );
     $form['old_name'] = array(
       '#type' => 'value',
-      '#value' => $service->name,
+      '#value' => $service['name'],
     );
     return parent::buildForm($form, $form_state);
   }
@@ -54,12 +59,28 @@ class CustomServicesEditForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function submitForm(array &$form, FormStateInterface $form_state) {
-    $values = $form_state->getValues();
+    $v = $form_state->getValues();
+    $config_factory = \Drupal::configFactory();
     $record = array();
-    foreach (array('name', 'url', 'type', 'tag') as $key) {
-      $record[$key] = $values[$key];
+
+    foreach (array('name', 'url', 'type', 'tag', 'sid') as $key) {
+      $record[$key] = $v[$key];
     }
-    \Drupal::database()->insert('shorten_cs')->fields($record)->execute();
+
+    \Drupal::database()->merge('shorten_cs')->fields($record)->key(['sid'])->execute();
+
+    if ($v['old_name'] == \Drupal::config('shorten.settings')->get('shorten_service', 'is.gd')) {
+      $config_factory->getEditable('shorten.settings')->set('shorten_service', $v['name']);
+    }
+
+    if ($v['old_name'] == \Drupal::config('shorten.settings')->get('shorten_service_backup', 'TinyURL')) {
+      $config_factory->getEditable('shorten.settings')->set('shorten_service', $v['name']);
+    }
+
+    drupal_set_message(t('The changes to service %service have been saved.', array('%service' => $record['name'])));
+
+    $form_state->setRedirect('shorten_cs.theme_shorten_cs_admin');
+    return;
   }
 
   /**
@@ -67,10 +88,13 @@ class CustomServicesEditForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
     $v = $form_state->getValues();
+
     if (($v['type'] == 'xml' || $v['type'] == 'json') && empty($v['tag'])) {
       $form_state->setErrorByName('type', t('An XML tag or JSON key is required for services with a response type of XML or JSON.'));
     }
+
     $exists = db_query("SELECT COUNT(sid) FROM {shorten_cs} WHERE name = :name", array(':name' => $v['name']))->fetchField();
+
     if ($exists > 0) {
       $form_state->setErrorByName('name', t('A service with that name already exists.'));
     }
