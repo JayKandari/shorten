@@ -1,0 +1,3 @@
+shorten_cs.theme_shorten_cs_admin:
+  route_name: shorten_cs.theme_shorten_cs_admin
+  title: 'Custom services'
