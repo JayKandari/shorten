@@ -79,10 +79,6 @@ class CustomServicesAddForm extends ConfigFormBase {
       '#description' => t('The XML tag or JSON key that identifies the full short URL in the API response.') . ' ' .
         t('Only required for XML and JSON response types.'),
     );
-    $form['submit'] = array(
-      '#type' => 'submit',
-      '#value' => t('Save'),
-    );
     return parent::buildForm($form, $form_state);
   }
 

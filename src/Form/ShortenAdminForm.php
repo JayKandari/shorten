@@ -203,7 +203,7 @@ class ShortenAdminForm extends ConfigFormBase {
    * {@inheritdoc}
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
-    $v = $form_state->getValues();;
+    $v = $form_state->getValues();
     if ($v['shorten_service'] == $v['shorten_service_backup'] && $v['shorten_service_backup'] != 'none') {
       $form_state->setErrorByName('shorten_service_backup', $this->t('You must select a backup abbreviation service that is different than your primary service.'));
     }
