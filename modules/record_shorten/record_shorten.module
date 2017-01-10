@@ -24,25 +24,30 @@ function record_shorten_shorten_create($old, $new, $service) {
     'original' => $old,
     'short' => $new,
     'service' => $service,
-    'uid' => \Drupal::currentUser()->uid,
+    'uid' => \Drupal::currentUser()->id(),
     'hostname' => \Drupal::request()->getClientIp(),
     'created' => REQUEST_TIME,
   );
-  \Drupal::database()->insert('record_shorten')->fields($array)->execute();
+  // @TODO : This creates duplicate records. Needs to be fixed.
+  \Drupal::database()->merge('record_shorten')
+  ->key($array)
+  ->fields($array)
+  ->execute();
 }
 
 /**
  * Builds a list of shortened URLs.
  */
 function record_shorten_records_table() {
-  if (\Drupal::moduleHandler()->moduleExists('views')) {
-    return views_embed_view('record_shorten', 'default');
-  }
+  // @TODO : Views display plugin needs to be fixed.
+  // if (\Drupal::moduleHandler()->moduleExists('views')) {
+  //   return views_embed_view('record_shorten', 'default');
+  // }
   $header = array(t('Original'), t('Short'), t('Service'));
   $rows = array();
   // SELECT original, short, service FROM {record_shorten} ORDER BY sid DESC
   $result = db_select('record_shorten', 'rs')
-    ->extend('PagerDefault')
+    ->extend('Drupal\Core\Database\Query\PagerSelectExtender')
     ->limit(10)
     ->fields('rs', array('original', 'short', 'service'))
     ->orderBy('rs.sid', 'DESC')
@@ -51,26 +56,16 @@ function record_shorten_records_table() {
     // Sigh... DBTNG doesn't have a ->fetchAsNonAssocArray()
     $rows[] = array(\Drupal\Component\Utility\Html::escape($row->original), \Drupal\Component\Utility\Html::escape($row->short), \Drupal\Component\Utility\Html::escape($row->service));
   }
-  // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-//
-//
-// @see https://www.drupal.org/node/2195739
-// $output = theme('table', array('header' => $header, 'rows' => $rows));
-
-  // Oddly, theme_pager($vars) has no defaults for $vars.
-  // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-//
-//
-// @see https://www.drupal.org/node/2195739
-// $output .= theme('pager', array('tags' => array(), 'element' => 0, 'parameters' => array(), 'quantity' => 9));
+  $table = array(
+    '#type' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+  );
+  // Render Table.
+  $output = drupal_render($table);
+  // Finally add Pager.
+  $pager = array('#type' => 'pager');
+  $output .= drupal_render($pager);
 
   return $output;
 }
