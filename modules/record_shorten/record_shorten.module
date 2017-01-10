@@ -6,22 +6,6 @@
  */
 
 /**
- * Implements hook_menu().
- */
-function record_shorten_menu() {
-  $items = array();
-  $items['admin/reports/shorten'] = array(
-    'title' => 'Shortened URLs',
-    'description' => 'Lists shortened URLs.',
-    'page callback' => 'theme',
-    'page arguments' => array('record_shorten_records'),
-    'access arguments' => array('administer site configuration'),
-    'type' => MENU_LOCAL_TASK,
-  );
-  return $items;
-}
-
-/**
  * Implements hook_theme().
  */
 function record_shorten_theme($existing, $type, $theme, $path) {
@@ -50,44 +34,6 @@ function record_shorten_shorten_create($old, $new, $service) {
 /**
  * Builds a list of shortened URLs.
  */
-function theme_record_shorten_records() {
-  $total = db_query("SELECT COUNT(sid) FROM {record_shorten}")->fetchField();
-  $output = '<p>' . \Drupal::translation()->formatPlural($total, '1 shortened URL has been recorded.', '@count shortened URLs have been recorded.');
-  $output .= record_shorten_records_table();
-  $output .= '<br />';
-  $form = \Drupal::formBuilder()->getForm('record_shorten_clear_all');
-  $output .= \Drupal::service("renderer")->render($form);
-  return $output;
-}
-
-/**
- * Clear all records form.
- */
-function record_shorten_clear_all($form, $form_state) {
-  $form['warning'] = array(
-    '#markup' => '<p><strong>' . t('Warning: there is no confirmation page. Cleared records are permanently deleted.') . '</strong></p>',
-  );
-  $form['note'] = array(
-    '#markup' => '<p>' . t('Note: clearing records does not clear the Shorten URLs cache.') . ' ' .
-      t('Also, URLs already in the cache are not recorded again.') . '</p>',
-  );
-  $form['clear'] = array(
-    '#type' => 'submit',
-    '#value' => t('Clear all records'),
-  );
-  return $form;
-}
-
-/**
- * Submit callback for clear all records form.
- */
-function record_shorten_clear_all_submit($form, &$form_state) {
-  db_query("TRUNCATE TABLE {record_shorten}");
-}
-
-/**
- * Builds a list of shortened URLs.
- */
 function record_shorten_records_table() {
   if (\Drupal::moduleHandler()->moduleExists('views')) {
     return views_embed_view('record_shorten', 'default');
@@ -110,8 +56,8 @@ function record_shorten_records_table() {
 // Calling _theme() directly can alter the expected output and potentially
 // introduce security issues (see https://www.drupal.org/node/2195739). You
 // should use renderable arrays instead.
-// 
-// 
+//
+//
 // @see https://www.drupal.org/node/2195739
 // $output = theme('table', array('header' => $header, 'rows' => $rows));
 
@@ -121,8 +67,8 @@ function record_shorten_records_table() {
 // Calling _theme() directly can alter the expected output and potentially
 // introduce security issues (see https://www.drupal.org/node/2195739). You
 // should use renderable arrays instead.
-// 
-// 
+//
+//
 // @see https://www.drupal.org/node/2195739
 // $output .= theme('pager', array('tags' => array(), 'element' => 0, 'parameters' => array(), 'quantity' => 9));
 
