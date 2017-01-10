@@ -7,12 +7,10 @@ This Module is currently undergoing Porting from D7 => D8
 # Completed Tasks:
 * shorten
 * shorten_cs
-
-# In progress:
-* shortener
-
-# Pending:
 * record_shorten
+
+# Pending Issues:
+* https://github.com/JayKandari/shorten/issues
 
 # Usage:
 * "git clone https://github.com/JayKandari/shorten.git"
