@@ -1,9 +1,5 @@
 <?php
-
-/**
- * @file
- *   A Views field handler for users' IP address.
- */
+namespace Drupal\record_shorten;
 
 /**
  * Restricts access to viewing the IP address field.

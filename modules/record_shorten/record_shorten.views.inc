@@ -9,8 +9,14 @@
  * Implements hook_views_data().
  */
 function record_shorten_views_data() {
+  $data = [];
+  $data['record_shorten'] = [];
+  $data['record_shorten']['table'] = [];
+
   // Basic table information.
   $data['record_shorten']['table']['group']  = t('Shortened URLs');
+
+  $data['record_shorten']['table']['provider'] = 'record_shorten';
 
   // Advertise this table as a possible base table.
   $data['record_shorten']['table']['base'] = array(
