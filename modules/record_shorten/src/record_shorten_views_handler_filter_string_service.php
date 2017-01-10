@@ -1,9 +1,5 @@
 <?php
-
-/**
- * @file
- *   Allows choosing the Shorten URLs service.
- */
+namespace Drupal\record_shorten;
 
 /**
  * Sets up a form for choosing the Shorten URLs service.

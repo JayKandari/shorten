@@ -1,0 +1,6 @@
+record_shorten.theme_record_shorten_records:
+  path: /admin/reports/shorten
+  defaults:
+    _title: 'Shortened URLs'
+  requirements:
+    _permission: 'administer site configuration'

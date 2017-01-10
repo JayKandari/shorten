@@ -40,11 +40,11 @@ function record_shorten_shorten_create($old, $new, $service) {
     'original' => $old,
     'short' => $new,
     'service' => $service,
-    'uid' => $GLOBALS['user']->uid,
-    'hostname' => ip_address(),
+    'uid' => \Drupal::currentUser()->uid,
+    'hostname' => \Drupal::request()->getClientIp(),
     'created' => REQUEST_TIME,
   );
-  drupal_write_record('record_shorten', $array);
+  \Drupal::database()->insert('record_shorten')->fields($array)->execute();
 }
 
 /**
@@ -52,11 +52,11 @@ function record_shorten_shorten_create($old, $new, $service) {
  */
 function theme_record_shorten_records() {
   $total = db_query("SELECT COUNT(sid) FROM {record_shorten}")->fetchField();
-  $output = '<p>' . format_plural($total, '1 shortened URL has been recorded.', '@count shortened URLs have been recorded.');
+  $output = '<p>' . \Drupal::translation()->formatPlural($total, '1 shortened URL has been recorded.', '@count shortened URLs have been recorded.');
   $output .= record_shorten_records_table();
   $output .= '<br />';
-  $form = drupal_get_form('record_shorten_clear_all');
-  $output .= drupal_render($form);
+  $form = \Drupal::formBuilder()->getForm('record_shorten_clear_all');
+  $output .= \Drupal::service("renderer")->render($form);
   return $output;
 }
 
@@ -89,7 +89,7 @@ function record_shorten_clear_all_submit($form, &$form_state) {
  * Builds a list of shortened URLs.
  */
 function record_shorten_records_table() {
-  if (module_exists('views')) {
+  if (\Drupal::moduleHandler()->moduleExists('views')) {
     return views_embed_view('record_shorten', 'default');
   }
   $header = array(t('Original'), t('Short'), t('Service'));
@@ -103,11 +103,29 @@ function record_shorten_records_table() {
     ->execute();
   foreach ($result as $row) {
     // Sigh... DBTNG doesn't have a ->fetchAsNonAssocArray()
-    $rows[] = array(check_plain($row->original), check_plain($row->short), check_plain($row->service));
+    $rows[] = array(\Drupal\Component\Utility\Html::escape($row->original), \Drupal\Component\Utility\Html::escape($row->short), \Drupal\Component\Utility\Html::escape($row->service));
   }
-  $output = theme('table', array('header' => $header, 'rows' => $rows));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output = theme('table', array('header' => $header, 'rows' => $rows));
+
   // Oddly, theme_pager($vars) has no defaults for $vars.
-  $output .= theme('pager', array('tags' => array(), 'element' => 0, 'parameters' => array(), 'quantity' => 9));
+  // @FIXME
+// theme() has been renamed to _theme() and should NEVER be called directly.
+// Calling _theme() directly can alter the expected output and potentially
+// introduce security issues (see https://www.drupal.org/node/2195739). You
+// should use renderable arrays instead.
+// 
+// 
+// @see https://www.drupal.org/node/2195739
+// $output .= theme('pager', array('tags' => array(), 'element' => 0, 'parameters' => array(), 'quantity' => 9));
+
   return $output;
 }
 
