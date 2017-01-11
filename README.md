@@ -1,27 +1,5 @@
-```
-This Module is currently undergoing Porting from D7 => D8
-
-# URL:
-* https://www.drupal.org/project/shorten
-
-# Completed Tasks:
-* shorten
-* shorten_cs
-* record_shorten
-
-# Pending Issues:
-* https://github.com/JayKandari/shorten/issues
-
-# Usage:
-* "git clone https://github.com/JayKandari/shorten.git"
-
-# Author:
-* @JayKandari
-```
-
-=======
 SUMMARY
-=======
+=========
 
 This module allows shortening URLs via almost any service. This is accomplished
 either via the API or with an included block or page. Over 25 services are
@@ -29,7 +7,7 @@ available by default and additional services are easily added. If the shorturl
 module or the shurly module is installed, they can be used to shorten URLs
 on your own domain as well.
 
-=======
+
 DETAILS
 =======
 
@@ -49,26 +27,23 @@ requesting the same shortened URL from different services may return results
 from the first service in both instances.
 
 
-==========
 SUBMODULES
 ==========
-
 This package contains two submodules: Record Shortened URLs and Shorten URLs
 Custom Services. The first keeps track of which URLs have been shortened and
 displays them to administrators at admin/reports/shorten; the second allows
 administrators to add custom URL shortening services through the user interface
 (instead of using the API).
 
-===
+
 API
 ===
-
 Up-to-date API documentation is maintained at http://drupal.org/node/805174.
 
-=====
-NOTES
-=====
 
-IceCreamYou (http://drupal.org/user/201425) wrote and maintains the module.
-Please report issues in the module's queue at
-http://drupal.org/project/issues/shorten
+> **NOTES**
+
+> - IceCreamYou (http://drupal.org/user/201425) wrote and maintains the module.
+> - Please report issues in the module's queue at : http://drupal.org/project/issues/shorten .
+> - D8 Port of this module was done by JayKandari (https://www.drupal.org/u/jaykandari).
+
