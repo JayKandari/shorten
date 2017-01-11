@@ -1,6 +1,0 @@
-services:
-  init_subscriber:
-    class: Drupal\shortener\EventSubscriber\InitSubscriber
-    tags:
-      -
-        name: event_subscriber
